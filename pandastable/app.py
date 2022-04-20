@@ -21,11 +21,11 @@
 
 from __future__ import absolute_import, print_function
 import sys, datetime, pickle, gzip
+
+from numpy import NaN, insert
 try:
     from tkinter import *
     from tkinter.ttk import *
-    #import ttkbootstrap as ttk
-    #from ttkbootstrap.constants import *
 except:
     from Tkinter import *
     from ttk import *
@@ -40,6 +40,7 @@ from collections import OrderedDict
 import matplotlib
 matplotlib.use('TkAgg')
 import pandas as pd
+import xlrd
 import re, os, platform, time
 from .core import Table
 from .data import TableModel
@@ -677,7 +678,29 @@ class DataExplore(Frame):
 
         data = pd.read_excel(filename,sheet_name=None)
         for n in data:
-            self.addSheet(n, df=data[n], select=True)
+            df = data[n]
+            
+            # Replace the first row with an excel style column index row.
+            # E.g. A, B, C, ... AD, AE, AF, ...
+            first_row = df.columns
+            new_first_row = []
+            for letter_num in range(0, len(first_row)):
+                new_first_row.append(xlrd.formula.colname(letter_num))
+            df.columns = new_first_row
+
+            # Move the orignal first row down below the new index row.
+            df.loc[0] = first_row
+            
+            # DataExplore auto populates the original column headers as
+            # "Unnamed: x" use a regex match to replace these with NaN
+            # values as they have now been moved.
+            for x in df.loc[0]:
+                filter = re.search("^Unnamed:", x)
+                if filter is not None:
+                    if filter.group() == x[0:8]:
+                        df.loc[0] = df.loc[0].replace(to_replace=x, value=NaN)
+
+            self.addSheet(n, df, select=True)
         return
 
     def load_dataframe(self, df, name=None, select=False):
@@ -1173,21 +1196,19 @@ class TestApp(Frame):
                                 showtoolbar=True, showstatusbar=True)
 
         #options = config.load_options()
-        options = {'floatprecision': 5, 'textcolor':'blue'}
+        options = {'colheadercolor':'green','floatprecision': 5}
         pt.show()
         config.apply_options(options, pt)
-        self.table.rowheader.bgcolor = 'orange'
-        self.table.colheader.bgcolor = 'lightgreen'
-        self.table.colheader.textcolor = 'purple'
+        #self.table.rowheader.maxwidth = 50
         #test row coloring
         pt.setRowColors(rows=range(2,100,2), clr='lightblue', cols='all')
         #test deleting
         pt.setSelectedRows([[4,6,8,10]])
         pt.deleteRow()
-        pt.setSelectedRow()
+        pt.setSelectedRow(10)
         pt.insertRow()
         #pt.redraw()
-        pt.editable = False
+
         return
 
 def main():
