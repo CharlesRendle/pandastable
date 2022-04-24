@@ -21,7 +21,9 @@
 
 from __future__ import absolute_import, print_function
 import sys, datetime, pickle, gzip
+from matplotlib.pyplot import step
 
+import numpy as np
 from numpy import NaN, insert
 try:
     from tkinter import *
@@ -677,9 +679,10 @@ class DataExplore(Frame):
                                                             ("All files","*.*")])
 
         data = pd.read_excel(filename,sheet_name=None)
+
         for n in data:
             df = data[n]
-            
+ 
             # Replace the first row with an excel style column index row.
             # E.g. A, B, C, ... AD, AE, AF, ...
             first_row = df.columns
@@ -689,7 +692,9 @@ class DataExplore(Frame):
             df.columns = new_first_row
 
             # Move the orignal first row down below the new index row.
-            df.loc[0] = first_row
+            df.loc[-1] = first_row  # adding a row
+            df.index = df.index + 1  # shifting index
+            df = df.sort_index()
             
             # DataExplore auto populates the original column headers as
             # "Unnamed: x" use a regex match to replace these with NaN
@@ -701,6 +706,7 @@ class DataExplore(Frame):
                         df.loc[0] = df.loc[0].replace(to_replace=x, value=NaN)
 
             self.addSheet(n, df, select=True)
+
         return
 
     def load_dataframe(self, df, name=None, select=False):
