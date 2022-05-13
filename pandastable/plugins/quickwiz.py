@@ -20,6 +20,7 @@
 """
 
 from __future__ import absolute_import, division, print_function
+from copyreg import constructor
 from tkinter import *
 import tkinter
 from typing import final
@@ -70,80 +71,80 @@ class QuickWiz(Plugin):
 
         # Starting frame from where the user can begin tutorials or open
         # the glossary.
-        home_frame = Frame(notebook)
+        def home():
+            return Frame(notebook)
+
+        home_frame = home()
 
         # Frame for capturing the observations
-        obs_frame = Frame(notebook)
+        def obs():
+            obs_frame = Frame(notebook)
 
-        label1 = Label(obs_frame, text='Bag Selectors:')
-        label1.grid(column=0, row=3)
+            label1 = Label(obs_frame, text='Bag Selectors:')
+            label1.grid(column=0, row=3)
 
-        start_cell = Button(obs_frame, text ="Start Cell")
-        start_cell.grid(column=0, row=4)
-        end_cell = Button(obs_frame, text ="End Cell")
-        end_cell.grid(column=1, row=4)
-        cell_range = Button(obs_frame, text ="Cell Range")
-        cell_range.grid(column=2, row=4)
-        direction = Button(obs_frame, text ="Direction")
-        direction.grid(column=0, row=5)
-        col_fill = Button(obs_frame, text ="Column Fill")
-        col_fill.grid(column=1, row=5)
-        row_fill = Button(obs_frame, text ="Row Fill")
-        row_fill.grid(column=2, row=5)
+            start_cell = Button(obs_frame, text ="Start Cell", command=(lambda: self.startCell(obs_frame)))
+            start_cell.grid(column=0, row=4)
+            end_cell = Button(obs_frame, text ="End Cell", command=(lambda: self.endCell(obs_frame)))
+            end_cell.grid(column=1, row=4)
+            cell_range = Button(obs_frame, text ="Cell Range")
+            cell_range.grid(column=2, row=4)
+            direction = Button(obs_frame, text ="Direction")
+            direction.grid(column=0, row=5)
+            col_fill = Button(obs_frame, text ="Column Fill")
+            col_fill.grid(column=1, row=5)
+            row_fill = Button(obs_frame, text ="Row Fill")
+            row_fill.grid(column=2, row=5)
 
-        label2 = Label(obs_frame, text='Bag Filters:')
-        label2.grid(column=0, row=7)
+            label2 = Label(obs_frame, text='Bag Filters:')
+            label2.grid(column=0, row=7)
 
-        remove_blanks = Button(obs_frame, text ="Remove Blanks")
-        remove_blanks.grid(column=0, row=8)
+            remove_blanks = Button(obs_frame, text ="Remove Blanks")
+            remove_blanks.grid(column=0, row=8)
+
+            return obs_frame
+
+        obs_frame = obs()
+
 
         # Frame for capturing the other data set components
-        # Contains another notebook frame from which new components can be added.   
-        dims_frame = Frame(notebook)
+        # Contains another notebook frame from which new components can be added. 
+        def dims():
+            dims_frame = Frame(notebook)
+            return dims_frame
 
-
-        #def componentName():
-        #    self.mainwin=Toplevel()
-        #    self.mainwin.title('Add New Component')
-        #    self.mainwin.geometry('300x100+200+100')
-
-        #    label = Label(self.mainwin, text="New Component Name: ")
-        #    label.grid(column=0, row=0)
-
-        #    new_component_name = Entry(self.mainwin)
-        #    new_component_name.grid(column=1, row=0)
-
-        #    def submit():
-        #        component_name_str = new_component_name.get()
-        #        self.mainwin.destroy()
-        #        return component_name_str
-        #        #return(new_component_name.get())
-
-        #    submit_button = Button(self.mainwin, text ="Submit", command=submit)
-        #    submit_button.grid(column=0, row=2, rowspan=2)
-
-        def get_name(new_component_name):
-            component_name = new_component_name.get()
-            print(component_name)
-            return component_name
+        dims_frame = dims()
 
         def handleTabChange(event):
-        # Function which creates a new tab when the last tab is cliked.
+        # Function which creates a new tab when the last tab is clicked.
         # This allows the user to add new component selections.
         # Functionality taken from https://stackoverflow.com/questions/71859022/tkinter-notebook-create-new-tabs-by-clicking-on-a-plus-tab-like-every-web-brow
             
             if notebook2.select() == notebook2.tabs()[-1]:
                 index = len(notebook2.tabs())-1
                 new_dim_frame = Frame(notebook2)
+                    
+                self.mainwin=Toplevel()
+                self.mainwin.title('Add New Component')
+                self.mainwin.geometry('300x100+200+100')
 
-                label6 = Label(new_dim_frame, text='Component Name:')
-                label6.grid(column=0, row=0)
+                label = Label(self.mainwin, text="New Component Name: ")
+                label.grid(column=0, row=0)
 
-                new_component_name = Entry(new_dim_frame)
+                new_component_name = Entry(self.mainwin)
                 new_component_name.grid(column=1, row=0)
 
-                #component_name = get_name(new_component_name)
-                
+                def submit():
+                    global component_name
+                    component_name = new_component_name.get()
+                    self.mainwin.destroy()
+                    return component_name
+
+                submit_button = Button(self.mainwin, text ="Submit", command=submit)
+                submit_button.grid(column=0, row=2, rowspan=2)
+
+                self.mainwin.wait_window(self.mainwin)
+                        
                 label3 = Label(new_dim_frame, text='Bag Selectors:')
                 label3.grid(column=0, row=3)
 
@@ -166,40 +167,42 @@ class QuickWiz(Plugin):
                 remove_blanks = Button(new_dim_frame, text ="Remove Blanks")
                 remove_blanks.grid(column=0, row=8)        
 
-                notebook2.insert(index, new_dim_frame, text="<Unnamed>")
+                notebook2.insert(index, new_dim_frame, text=component_name)
                 notebook2.select(index)
 
-                addAllignment("<Unnamed>", len(notebook2.tabs())-1)
+            addAllignment(component_name, len(notebook2.tabs())-1)
 
         notebook2 = Notebook(dims_frame)
         notebook2.bind("<<NotebookTabChanged>>", handleTabChange)
         notebook2.pack(fill='both', expand=True)
 
-        
-        
         add_dim_frame = Frame(notebook2)
 
         # The allignement frame and last step before tranformation takes place.
-        final_frame = Frame(notebook)
+        def final():
+            final_frame = Frame(notebook)
 
-        label7 = Label(final_frame, text="Relativity")
-        label7.grid(column=1, row=0)
+            label7 = Label(final_frame, text="Relativity")
+            label7.grid(column=1, row=0)
+            label8 = Label(final_frame, text="Direction")
+            label8.grid(column=2, row=0)
 
-        label8 = Label(final_frame, text="Direction")
-        label8.grid(column=2, row=0)
-
-        relativity_options = ["DIRECTLY", "CLOSEST", "CONSTANT"]
-        direction_options = ["ABOVE", "BELOW", "LEFT", "RIGHT"]
-
-        relativity_variable = StringVar()
-        relativity_variable.set(relativity_options[2])
-
-        direction_variable = StringVar()
-        direction_variable.set(direction_options[3])
+            finish_button = Button(final_frame, text ="Finish", command=self.transform)
+            finish_button.grid(column=2, row=10, rowspan=2)
+            
+            return final_frame
+    
+        final_frame = final()
 
         def addAllignment(component_name, grid_count_y):
             for tab in notebook2.tabs():
-                #print(tab)
+                relativity_options = ["-", "DIRECTLY", "CLOSEST", "CONSTANT"]
+                relativity_variable = StringVar()
+                relativity_variable.set(relativity_options[3])
+
+                direction_options = ["-", "ABOVE", "BELOW", "LEFT", "RIGHT"]               
+                direction_variable = StringVar()
+                direction_variable.set(direction_options[4])
 
                 label5 = Label(final_frame, text=component_name)
                 label5.grid(column=0, row=grid_count_y)
@@ -211,9 +214,6 @@ class QuickWiz(Plugin):
                 direction.grid(column=2, row=grid_count_y)
             
         notebook.bind("<<handleTabChanged>>",addAllignment)
-
-        finish_button = Button(final_frame, text ="Finish")
-        finish_button.grid(column=2, row=10, rowspan=2)
 
         notebook.add(home_frame, text='Home')
         notebook.add(obs_frame, text='Observations')
@@ -268,34 +268,33 @@ class QuickWiz(Plugin):
                "version: %s" %self.version
         return txt
 
-    def nextFrame(self, evt=None):
-        self._doFrame2()
+    def startCell(self, frame):
+        start_cell = Label(frame, text="START: ")
+        start_cell.grid(column=0, row=0)
+
+        start_cell_input = Entry(frame)
+        start_cell_input.grid(column=1, row=0)
+
         return
-    
-    #def componentName(self):
-    #    self.mainwin=Toplevel()
-    #    self.mainwin.title('Add New Component')
-    #    self.mainwin.geometry('300x100+200+100')
 
-    #    label = Label(self.mainwin, text="New Component Name: ")
-    #    label.grid(column=0, row=0)
+    def endCell(self, frame):
+        end_cell = Label(frame, text="END: ")
+        end_cell.grid(column=0, row=0)
 
-    #    new_component_name = Entry(self.mainwin)
-    #    new_component_name.grid(column=1, row=0)
+        end_cell_input = Entry(frame)
+        end_cell_input.grid(column=1, row=0)
 
-    #    def submit():
-    #        component_name_str = new_component_name.get()
-    #        print("+++++++++++++++++++++++++++")
-    #        print(component_name_str)
-    #        print("+++++++++++++++++++++++++++")
-    #        self.mainwin.destroy()
-    #        return component_name_str
+        return
 
-    #    submit_button = Button(self.mainwin, text ="Submit", command=submit)
-    #    submit_button.grid(column=0, row=2, rowspan=2)
+    def transform(self):
+        self.table = self.parent.getCurrentTable()
+        self.mainwin = Frame(self.table.parentframe)
+        self.mainwin.grid(row=6,column=0,columnspan=4,sticky='news')
 
-        #component_name_str = new_component_name.get()
-        #print("------------------------------")
-        #print(component_name_str)
-        #print("------------------------------")
-        #return component_name_str
+        l=Label(self.mainwin, text='This is a template plugin')
+        l.pack(side=TOP,fill=BOTH)
+        b=Button(self.mainwin,text='Close',command=self.quit)
+        b.pack(side=TOP,fill=BOTH,pady=2)
+        self.mainwin.bind("<Destroy>", self.quit)
+        return
+

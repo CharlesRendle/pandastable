@@ -1187,6 +1187,15 @@ class DataExplore(Frame):
         self.main.destroy()
         return
 
+#    def setColours(self):
+#        #global table
+#        table = self.getCurrentTable()
+#        rows = [0,1,2]
+#        cols = [0,2]
+#        color = "red"
+#        table.setRowColors(rows, color, cols=cols)
+        #table.redraw()    
+
 class TestApp(Frame):
     """Basic test frame for the table"""
     def __init__(self, parent=None):
